@@ -1,0 +1,14 @@
+for exercises from https://discuss.codecademy.com/t/data-science-independent-project-2-explore-a-sample-database/419945
+using .db file here https://www.sqlitetutorial.net/sqlite-sample-database/
+
+--BASIC
+--#1 Which tracks appeared in the most playlists? how many playlist did they appear in?
+
+select name, count(trackid)
+from (
+	select * from tracks
+	left join playlist_track
+	on tracks.trackid = playlist_track.TrackId
+	)
+group by trackid
+order by count(trackid) desc;
