@@ -58,3 +58,34 @@ order by revenues DESC
 limit 10
 
 -- Revenues by Genre
+
+select genres.name, sum(invoice_items.unitprice * invoice_items.quantity) as revenues from invoice_items
+left join tracks on invoice_items.trackid = tracks.TrackId
+left join genres on tracks.genreid = genres.GenreId
+group by genres.name
+order by revenues desc
+
+-- #3 Which countries have the highest sales revenue? What percent of total revenue does each country make up?
+
+select invoices.BillingCountry, sum(invoice_items.unitprice * invoice_items.quantity) as revenues,
+(sum(invoice_items.unitprice * invoice_items.quantity)*100/(select sum(invoices.total) from invoices))  as revenuepercent from invoices
+left join invoice_items
+on invoices.InvoiceId = invoice_items.InvoiceId
+group by BillingCountry
+order by revenues desc
+
+--#4 How many customers did each employee support, what is the average revenue for each sale, and what is their total sale?
+
+-- pulls: employee|Number of customers supported|number of sales|revenues from total number of sales|average revenue per sale (not per customer)| [other examples are wrong from others, and calculate average revenue per customer, but not per sale]
+
+select employees.FirstName, employees.LastName, count( distinct customers.CustomerId) as totalhelped, count (customers.CustomerId) as totalsales, sum(invoices.Total) as totalsalesrevenue, (sum(invoices.Total))/count(invoices.CustomerId) as averagesales  from customers
+left join employees on customers.SupportRepId = employees.EmployeeId
+left join invoices on customers.customerid = invoices.CustomerId
+group by employees.EmployeeId
+order by totalhelped desc, totalsales desc
+
+--INTERMEDIATE
+
+--#1
+
+
