@@ -107,4 +107,14 @@ select finaltable.ntracks, avg(finaltable.sales) from finaltable
 group by finaltable.ntracks
 order by avg(finaltable.sales) desc
 
+--#2
 
+with playlistcount as (
+	select playlist_track.TrackId, count(playlist_track.TrackId) as nplaylist from playlist_track
+	group by playlist_track.TrackId
+	)
+select nplaylist, avg(invoice_items.unitprice * invoice_items.quantity) as avgsales from playlistcount
+left join invoice_items
+on playlistcount.trackid = invoice_items.TrackId
+group by nplaylist
+order by nplaylist asc
