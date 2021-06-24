@@ -88,4 +88,23 @@ order by totalhelped desc, totalsales desc
 
 --#1
 
+-- tempalbumtable creates table listing albums and trackids.
+-- finaltable adds a count for # of tracks per album, and sales per album
+-- final calculations average sales per albumlength based on finaltable
+
+with finaltable as(
+	With tempalbumtable as(
+		select albums.AlbumId, albums.Title, tracks.trackid from albums
+		inner join tracks
+		on albums.AlbumId = tracks.albumid
+		)
+	select tempalbumtable.albumid, tempalbumtable.title, count( distinct tempalbumtable.trackid) as ntracks, sum(invoice_items.UnitPrice * invoice_items.quantity) as sales from tempalbumtable
+	left join invoice_items
+	on tempalbumtable.trackid = invoice_items.TrackId
+	group by tempalbumtable.title
+	order by ntracks desc)
+select finaltable.ntracks, avg(finaltable.sales) from finaltable
+group by finaltable.ntracks
+order by avg(finaltable.sales) desc
+
 
