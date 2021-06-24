@@ -118,3 +118,18 @@ left join invoice_items
 on playlistcount.trackid = invoice_items.TrackId
 group by nplaylist
 order by nplaylist asc
+
+-- Advanced
+
+with current_year as (
+	select strftime('%Y',invoicedate) as currentyear, sum(total) as currenttotals from invoices
+	group by currentyear),
+	
+prior_year as (
+		select (strftime('%Y',invoicedate) +1 )as prioryear, sum(total)as priortotals from invoices
+		group by prioryear)
+		
+select currentyear, currenttotals, (currenttotals/priortotals -1)*100 as change from current_year
+cross join prior_year 
+where cast (currentyear as integer) = cast(prioryear as integer)
+
