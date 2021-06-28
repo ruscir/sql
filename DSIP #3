@@ -1,0 +1,68 @@
+For https://discuss.codecademy.com/t/data-science-independent-project-3-education-census-data/419947
+
+-- BASIC
+
+#1 How many public high schools are in each zip code? in each state?
+
+-- Each Zip Code
+
+select zip_code, count(*) as schools from publichsdata
+group by zip_code
+order by count(*) desc
+
+-- Each State
+
+select state_code, count(*) as schools from publichsdata
+group by state_code
+order by count(*) desc
+
+#2 The locale_code column in the high school data corresponds to various levels of urbanization as listed below. Use the CASE statement to display the corresponding locale_text and locale_size in your query result.
+
+select school_name, locale_code,
+case 
+	when substr(locale_code,1,1) = '1' THEN 'City'
+	when substr(locale_code,1,1) = '2' then 'Suburb'
+	when substr(locale_code,1,1) = '3' THEN 'Town'
+	when substr(locale_code,1,1) = '4' THEN 'Rural'
+END as 'urbanization',
+CASE when locale_code < 24 then 
+	case 
+		when substr(locale_code,2,1) = '1' then 'Large'
+		when substr(locale_code,2,1) = '2' then 'Midsize'
+		when substr(locale_code,2,1) = '3' then 'Small'
+		END 
+	ELSE
+	CASE
+		when substr(locale_code,2,1) = '1' then 'Fringe'
+		when substr(locale_code,2,1) = '2' then 'Distant'
+		when substr(locale_code,2,1) = '3' then 'Remote'
+	END
+END as 'size'
+
+from publichsdata;
+
+#3 min, max, avg for nation
+select min(median_household_income) as minincome, max(median_household_income)as maxincome, avg(median_household_income)as avgincome from censusdata
+where median_household_income !='NULL' and median_household_income is not null
+
+
+--by state
+
+select state_code, min(median_household_income) as min, max(median_household_income)as max, avg(median_household_income)as avgincome from censusdata
+where median_household_income !='NULL' and median_household_income is not null
+group by state_code
+
+#4 Do characteristics of the zip-code area, such as median household income, influence students’ performance in high school? 
+
+select avg(publichsdata.pct_proficient_math)as MathProf,avg(publichsdata.pct_proficient_reading) as ReadingProf,
+case 
+	when censusdata.median_household_income <50000 then 'Low Income'
+	when censusdata.median_household_income BETWEEN 50000 and 100000 then 'Medium Income'
+	when censusdata.median_household_income >100000 then 'High Income'
+end as 'Income Bracket'
+from publichsdata
+left join censusdata
+on publichsdata.zip_code = censusdata.zip_code
+where censusdata.median_household_income is not null and censusdata.median_household_income != 'NULL'
+group by 3
+order by 2 desc
