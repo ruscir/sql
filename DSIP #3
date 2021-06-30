@@ -66,3 +66,60 @@ on publichsdata.zip_code = censusdata.zip_code
 where censusdata.median_household_income is not null and censusdata.median_household_income != 'NULL'
 group by 3
 order by 2 desc
+
+#5 On average, do students perform better on the math or reading exam? Find the number of states where students do better on the math exam, and vice versa. 
+
+with statetable as (
+select state_code, avg(publichsdata.pct_proficient_math) as mathskillz,avg(publichsdata.pct_proficient_reading) as readskillz,
+	CASE
+		when avg(publichsdata.pct_proficient_reading) > avg(publichsdata.pct_proficient_math) then 'Reading'
+		when avg(publichsdata.pct_proficient_reading) < avg(publichsdata.pct_proficient_math) then 'Math'
+		when avg(publichsdata.pct_proficient_math) = 0 or avg(publichsdata.pct_proficient_reading) = 0 then 'No Exam Data'
+	end as 'Best_Skillz'
+
+	from publichsdata
+	group by state_code
+	)
+select statetable.Best_Skillz, count(*) as SkilledNo from statetable
+Group by statetable.Best_Skillz
+
+#6 What is the average proficiency on state assessment exams for each zip code, and how do they compare to other zip codes in the same state? 
+
+--Average Proficiency by Zip Code
+
+select zip_code, round(avg(pct_proficient_math),2) as math, round(avg(pct_proficient_reading),2) as reading from publichsdata
+group by zip_code
+
+-- Compare to state proficiency
+
+with finalstats as ( 
+	with statestats as (
+		select state_code, round(min(pct_proficient_math),0) as stateminmath,round(max(pct_proficient_math),0)as statemaxmath, round(avg(pct_proficient_math),0) as stateavgmath , round(min(pct_proficient_reading),0) as stateminread, round(max(pct_proficient_reading),0) as statemaxread, round(avg(pct_proficient_reading),0) as stateavgread
+		from publichsdata
+		where pct_proficient_math != 'NULL' and pct_proficient_reading !='NULL'
+		group by state_code
+		)
+	select publichsdata.zip_code, publichsdata.state_code, statestats.stateminmath, statestats.statemaxmath, statestats.stateavgmath, statestats.stateminread, statestats.statemaxread, statestats.stateavgread, round(avg(publichsdata.pct_proficient_math),0) as ZipAvgMath, round(avg(publichsdata.pct_proficient_reading),0) as ZipAvgRead from publichsdata
+	left join statestats
+	on publichsdata.state_code = statestats.state_code
+	where publichsdata.pct_proficient_math != 'NULL' and publichsdata.pct_proficient_reading !='NULL'
+	group by publichsdata.zip_code
+	)
+select *,
+CASE
+	when finalstats.zipavgmath = finalstats.stateminmath then 'Worst'
+	when finalstats.zipavgmath > finalstats.stateminmath and finalstats.zipavgmath < finalstats.stateavgmath then 'Below Average'
+	when finalstats.zipavgmath = finalstats.stateavgmath then 'Average Math'
+	when finalstats.zipavgmath < finalstats.statemaxmath and finalstats.zipavgmath > finalstats.stateavgmath then 'Above Average'
+	when finalstats.zipavgmath = finalstats.statemaxmath then 'Best'
+	End as 'ZipMathAbility',
+CASE
+	when finalstats.zipavgread = finalstats.stateminread then 'Worst'
+	when finalstats.zipavgread > finalstats.stateminread and finalstats.zipavgread < finalstats.stateavgread then 'Below Average'
+	when finalstats.zipavgread = finalstats.stateavgread then 'Average Math'
+	when finalstats.zipavgread < finalstats.statemaxread and finalstats.zipavgread > finalstats.stateavgread then 'Above Average'
+	when finalstats.zipavgread = finalstats.statemaxread then 'Best'
+	End as 'ZipReadAbility'
+
+from finalstats
+group by finalstats.zip_code
